@@ -1,0 +1,35 @@
+{
+  "portfolio": [
+    "roofing contractor",
+    "auto detailing",
+    "custom auto shop",
+    "epoxy floor coating",
+    "junk removal",
+    "storm damage restoration",
+    "general contractor"
+  ],
+  "home-services": [
+    "plumber",
+    "hvac contractor",
+    "electrician",
+    "landscaping company",
+    "house cleaning service",
+    "pest control",
+    "fence company",
+    "pool service",
+    "garage door repair",
+    "painting contractor"
+  ],
+  "professional": [
+    "dentist",
+    "law firm",
+    "accountant",
+    "med spa",
+    "gym",
+    "chiropractor",
+    "physical therapy clinic",
+    "veterinarian",
+    "restaurant",
+    "real estate agent"
+  ]
+}
