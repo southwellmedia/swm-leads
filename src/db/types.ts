@@ -21,6 +21,7 @@ export type Database = {
           city: string | null
           created_at: string
           dedupe_key: string
+          email: string | null
           first_seen_at: string
           id: string
           last_seen_at: string
@@ -41,6 +42,7 @@ export type Database = {
           city?: string | null
           created_at?: string
           dedupe_key: string
+          email?: string | null
           first_seen_at?: string
           id?: string
           last_seen_at?: string
@@ -61,6 +63,7 @@ export type Database = {
           city?: string | null
           created_at?: string
           dedupe_key?: string
+          email?: string | null
           first_seen_at?: string
           id?: string
           last_seen_at?: string

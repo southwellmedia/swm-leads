@@ -114,7 +114,7 @@ program
         });
         console.log(
           `run ${saved.runId} · ${saved.businesses} businesses · ${saved.scans} scans · ` +
-            `${saved.signals} signals · ${saved.screenshots} screenshots` +
+            `${saved.signals} signals · ${saved.emails} emails · ${saved.screenshots} screenshots` +
             (saved.screenshotErrors ? ` (${saved.screenshotErrors} uploads failed)` : ""),
         );
       } catch (err) {

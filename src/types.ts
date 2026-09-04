@@ -32,6 +32,8 @@ export interface ScanResult {
   loadMs?: number;
   pageBytes?: number;
   title?: string;
+  /** Best contact email found on the site, if any. Not scored. */
+  email?: string;
   signals: Signal[];
   /** 0–100. Higher = more likely to need a new site. */
   score: number;

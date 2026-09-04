@@ -20,6 +20,7 @@ export interface PersistSummary {
   businesses: number;
   scans: number;
   signals: number;
+  emails: number;
   screenshots: number;
   screenshotErrors: number;
 }
@@ -88,6 +89,24 @@ export async function persistRun(db: Db, results: ScanResult[], meta: RunMeta): 
     if (error) throw new Error(`Could not upsert businesses: ${error.message}`);
     for (const row of data ?? []) idByKey.set(row.dedupe_key, row.id);
   }
+
+  // ---- emails: only where we actually found one ---------------------------
+  // A targeted second pass rather than a column on the upsert above: a scan
+  // that finds nothing must leave a previously discovered address alone, and a
+  // batch upsert would write null across the board.
+  const emailLimit = pLimit(8);
+  let emails = 0;
+  await Promise.all(
+    results.map((r) =>
+      emailLimit(async () => {
+        if (!r.email) return;
+        const businessId = idByKey.get(dedupeKeyFor(r.business));
+        if (!businessId) return;
+        const { error } = await db.from("businesses").update({ email: r.email }).eq("id", businessId);
+        if (!error) emails++;
+      }),
+    ),
+  );
 
   // ---- screenshots: upload before the scan rows so paths go in with them ---
   const limit = pLimit(4);
@@ -190,6 +209,7 @@ export async function persistRun(db: Db, results: ScanResult[], meta: RunMeta): 
     businesses: idByKey.size,
     scans: scanRows.length,
     signals: signalRows.length,
+    emails,
     screenshots,
     screenshotErrors,
   };

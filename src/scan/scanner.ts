@@ -3,6 +3,8 @@ import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import type { Business, ScanResult, Signal } from "../types.js";
 import { fingerprint } from "./fingerprint.js";
+import { extractEmails, pickBestEmail } from "./email.js";
+import { hostOf } from "../util/identity.js";
 
 const CURRENT_YEAR = new Date().getFullYear();
 /** Budget for a full `load` (all subresources). Slow sites routinely exceed it. */
@@ -147,6 +149,15 @@ export class Scanner {
     S.push(sig("no-viewport", "No mobile viewport meta tag", 20, !/width=device-width/i.test(mobile.viewport)));
     S.push(sig("h-overflow", "Horizontal overflow on a phone-sized screen", 15, mobile.overflowPx > 30, `${mobile.overflowPx}px`));
     S.push(sig("tiny-text", "Most text is unreadably small on mobile", 10, mobile.smallFontRatio > 0.5, `${Math.round(mobile.smallFontRatio * 100)}%`));
+
+    // Contact email. Not scored — it is not a quality signal, it is the thing
+    // that makes outreach possible at all, since Places never returns one.
+    try {
+      const bodyText = await page.evaluate(() => document.body?.innerText ?? "");
+      r.email = pickBestEmail(extractEmails(html, bodyText), hostOf(r.finalUrl ?? biz.website ?? ""));
+    } catch {
+      /* a page that will not give up its text is not a scan failure */
+    }
 
     // Builder / legacy tech
     const fp = fingerprint(html, headers);
