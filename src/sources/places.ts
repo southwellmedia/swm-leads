@@ -71,6 +71,7 @@ export class PlacesSource implements Source {
       for (const p of data.places ?? []) {
         out.push({
           id: p.id,
+          placeId: p.id,
           name: p.displayName?.text ?? "(unnamed)",
           category: query,
           website: p.websiteUri,

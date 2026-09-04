@@ -7,6 +7,13 @@ import { fingerprint } from "./fingerprint.js";
 const CURRENT_YEAR = new Date().getFullYear();
 const NAV_TIMEOUT_MS = 25_000;
 
+/**
+ * Bump whenever a signal weight below changes, or a signal is added/removed.
+ * Every persisted scan records this, so a score from an old ruleset is never
+ * silently compared against one from a new ruleset in the history views.
+ */
+export const SCORING_VERSION = "v1";
+
 export interface ScannerOptions {
   screenshotDir: string;
   screenshots: boolean;

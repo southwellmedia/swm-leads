@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import type { Business, Source } from "../types.js";
+import { dedupeKeyFor } from "../util/identity.js";
 
 /**
  * CSV source — for testing the scanner without an API key, or for feeding in
@@ -21,13 +22,18 @@ export class CsvSource implements Source {
       const cols = parseLine(line);
       const name = cols[idx("name")]?.trim();
       if (!name) continue;
+      const website = cols[idx("website")]?.trim() || undefined;
+      const address = cols[idx("address")]?.trim() || undefined;
       rows.push({
-        id: `csv-${rows.length + 1}`,
+        // Derived from content, never from row position: a positional id
+        // silently re-points at a different business the moment someone
+        // inserts a line in the CSV.
+        id: dedupeKeyFor({ name, website, address }),
         name,
         category: cols[idx("category")]?.trim() || query,
-        website: cols[idx("website")]?.trim() || undefined,
+        website,
         phone: cols[idx("phone")]?.trim() || undefined,
-        address: cols[idx("address")]?.trim() || undefined,
+        address,
         source: "csv",
       });
     }

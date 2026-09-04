@@ -1,5 +1,7 @@
 export interface Business {
   id: string;
+  /** Google Place ID. Stable across runs; absent for CSV-sourced rows. */
+  placeId?: string;
   name: string;
   category: string;
   website?: string;

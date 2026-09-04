@@ -6,8 +6,11 @@ import { mkdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { PlacesSource } from "./sources/places.js";
 import { CsvSource } from "./sources/csv.js";
-import { Scanner } from "./scan/scanner.js";
+import { Scanner, SCORING_VERSION } from "./scan/scanner.js";
 import { writeCsv, writeJson, printSummary } from "./output/writers.js";
+import { hostOf } from "./util/identity.js";
+import { createDbClient } from "./db/client.js";
+import { persistRun } from "./db/persist.js";
 import type { Business, ScanResult, Source } from "./types.js";
 
 const program = new Command();
@@ -24,6 +27,7 @@ program
   .option("-o, --out <dir>", "Output directory", "out")
   .option("--no-screenshots", "Skip screenshots")
   .option("--min-score <n>", "Only include results at or above this score in the CSV", "0")
+  .option("--no-db", "Skip writing to Supabase even if it is configured")
   .action(async (opts) => {
     const outDir = path.resolve(opts.out);
     await mkdir(outDir, { recursive: true });
@@ -91,6 +95,35 @@ program
 
     printSummary(results);
     console.log(`CSV:  ${csvFile}\nJSON: ${jsonFile}`);
+
+    // Supabase is optional: with no env configured the scanner behaves exactly
+    // as before and the CSV/JSON output is unchanged.
+    const db = opts.db ? createDbClient() : null;
+    if (opts.db && !db) {
+      console.log("DB:   skipped (set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY to persist)");
+    } else if (db) {
+      try {
+        process.stdout.write("DB:   writing to Supabase… ");
+        const saved = await persistRun(db, results, {
+          city: opts.city,
+          categories,
+          source: source.name as "places" | "csv",
+          limitPerCategory: parseInt(opts.limit, 10),
+          scoringVersion: SCORING_VERSION,
+          options: { minScore, screenshots: opts.screenshots, csv: opts.csv ?? null },
+        });
+        console.log(
+          `run ${saved.runId} · ${saved.businesses} businesses · ${saved.scans} scans · ` +
+            `${saved.signals} signals · ${saved.screenshots} screenshots` +
+            (saved.screenshotErrors ? ` (${saved.screenshotErrors} uploads failed)` : ""),
+        );
+      } catch (err) {
+        // The scan succeeded and the CSV is already on disk; a database
+        // failure should not throw that work away.
+        console.error(`failed — ${(err as Error).message}`);
+        console.error("Local CSV/JSON output above is unaffected.");
+      }
+    }
   });
 
 program.parseAsync().catch((err) => {
@@ -100,14 +133,4 @@ program.parseAsync().catch((err) => {
 
 function collect(v: string, prev: string[]) {
   return [...prev, v];
-}
-
-function hostOf(url: string): string {
-  try {
-    const u = new URL(/^https?:\/\//i.test(url) ? url : `http://${url}`);
-    const p = u.pathname.replace(/\/+$/, "");
-    return u.hostname.replace(/^www\./, "") + (p && p !== "/index.html" ? p : "");
-  } catch {
-    return "";
-  }
 }

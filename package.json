@@ -4,13 +4,16 @@
   "private": true,
   "description": "Find local small businesses with outdated (or missing) websites and rank them as leads.",
   "type": "module",
-  "bin": { "leadscout": "./dist/cli.js" },
+  "bin": {
+    "leadscout": "./dist/cli.js"
+  },
   "scripts": {
     "scan": "tsx src/cli.ts scan",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.115.0",
     "commander": "^12.1.0",
     "dotenv": "^16.4.5",
     "p-limit": "^6.1.0",
