@@ -10,6 +10,8 @@ export interface Business {
   rating?: number;
   reviewCount?: number;
   mapsUrl?: string;
+  lat?: number;
+  lng?: number;
   source: "places" | "csv";
 }
 

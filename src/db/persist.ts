@@ -75,6 +75,8 @@ export async function persistRun(db: Db, results: ScanResult[], meta: RunMeta): 
       rating: b.rating ?? null,
       review_count: b.reviewCount ?? null,
       maps_url: b.mapsUrl ?? null,
+      lat: b.lat ?? null,
+      lng: b.lng ?? null,
       source: b.source,
       last_seen_at: new Date().toISOString(),
     };

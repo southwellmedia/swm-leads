@@ -18,6 +18,7 @@ const FIELD_MASK = [
   "places.userRatingCount",
   "places.googleMapsUri",
   "places.primaryType",
+  "places.location",
   "nextPageToken",
 ].join(",");
 
@@ -32,6 +33,7 @@ interface PlacesResponse {
     userRatingCount?: number;
     googleMapsUri?: string;
     primaryType?: string;
+    location?: { latitude: number; longitude: number };
   }>;
   nextPageToken?: string;
   error?: { message: string; status: string };
@@ -80,6 +82,8 @@ export class PlacesSource implements Source {
           rating: p.rating,
           reviewCount: p.userRatingCount,
           mapsUrl: p.googleMapsUri,
+          lat: p.location?.latitude,
+          lng: p.location?.longitude,
           source: "places",
         });
       }

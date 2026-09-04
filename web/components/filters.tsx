@@ -16,7 +16,7 @@ export function Filters({ cities, categories }: { cities: string[]; categories: 
       const next = new URLSearchParams(params.toString());
       if (!value || value === "all") next.delete(key);
       else next.set(key, value);
-      router.push(`/?${next.toString()}`);
+      router.push(`/leads?${next.toString()}`);
     },
     [params, router],
   );
@@ -79,6 +79,15 @@ export function Filters({ cities, categories }: { cities: string[]; categories: 
           </option>
         ))}
       </select>
+
+      <label className="flex items-center gap-1.5 text-sm" style={{ color: "var(--muted)" }}>
+        <input
+          type="checkbox"
+          checked={params.get("email") === "1"}
+          onChange={(e) => set("email", e.target.checked ? "1" : "")}
+        />
+        Has email
+      </label>
 
       <select
         value={params.get("min") ?? "0"}

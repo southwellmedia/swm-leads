@@ -60,7 +60,7 @@ export default async function LeadDetail({ params }: { params: Promise<{ id: str
 
   return (
     <main className="mx-auto max-w-6xl p-6">
-      <Link href="/" className="text-sm underline" style={{ color: "var(--muted)" }}>
+      <Link href="/leads" className="text-sm underline" style={{ color: "var(--muted)" }}>
         ← Lead queue
       </Link>
 
@@ -133,6 +133,13 @@ export default async function LeadDetail({ params }: { params: Promise<{ id: str
           {shotUrl && (
             <section className="rounded-xl border p-4" style={panel}>
               <h2 className="text-sm font-semibold">On a phone</h2>
+              {lead.screenshot_taken_at && lead.scanned_at &&
+                new Date(lead.screenshot_taken_at) < new Date(lead.scanned_at) && (
+                  <p className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>
+                    Taken {new Date(lead.screenshot_taken_at).toLocaleString()}, before the latest
+                    scan — the score is newer than this image.
+                  </p>
+                )}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={shotUrl}

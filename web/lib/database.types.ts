@@ -1,4 +1,4 @@
-﻿export type Json =
+export type Json =
   | string
   | number
   | boolean
@@ -25,6 +25,8 @@ export type Database = {
           first_seen_at: string
           id: string
           last_seen_at: string
+          lat: number | null
+          lng: number | null
           maps_url: string | null
           name: string
           phone: string | null
@@ -46,6 +48,8 @@ export type Database = {
           first_seen_at?: string
           id?: string
           last_seen_at?: string
+          lat?: number | null
+          lng?: number | null
           maps_url?: string | null
           name: string
           phone?: string | null
@@ -67,6 +71,8 @@ export type Database = {
           first_seen_at?: string
           id?: string
           last_seen_at?: string
+          lat?: number | null
+          lng?: number | null
           maps_url?: string | null
           name?: string
           phone?: string | null
@@ -451,8 +457,10 @@ export type Database = {
           city: string | null
           copyright_year: number | null
           email: string | null
+          lat: number | null
           lead_id: string | null
           lead_status: Database["public"]["Enums"]["lead_status"] | null
+          lng: number | null
           maps_url: string | null
           name: string | null
           next_action_at: string | null
@@ -467,6 +475,7 @@ export type Database = {
           scanned_at: string | null
           score: number | null
           screenshot_path: string | null
+          screenshot_taken_at: string | null
           source: Database["public"]["Enums"]["business_source"] | null
           website: string | null
           website_host: string | null
