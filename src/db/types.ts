@@ -505,7 +505,7 @@ export type Database = {
         | "in_person"
         | "other"
       outreach_direction: "outbound" | "inbound"
-      scan_status: "scanned" | "no-website" | "unreachable"
+      scan_status: "scanned" | "no-website" | "unreachable" | "timeout"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -653,7 +653,7 @@ export const Constants = {
         "other",
       ],
       outreach_direction: ["outbound", "inbound"],
-      scan_status: ["scanned", "no-website", "unreachable"],
+      scan_status: ["scanned", "no-website", "unreachable", "timeout"],
     },
   },
 } as const

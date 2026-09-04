@@ -25,7 +25,7 @@ export interface Signal {
 export interface ScanResult {
   business: Business;
   finalUrl?: string;
-  status: "scanned" | "no-website" | "unreachable";
+  status: "scanned" | "no-website" | "unreachable" | "timeout";
   error?: string;
   builder?: string;
   copyrightYear?: number;

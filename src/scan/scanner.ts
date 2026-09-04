@@ -1,18 +1,24 @@
-import { chromium, type Browser, type BrowserContext } from "playwright";
+import { chromium, errors as pwErrors, type Browser, type BrowserContext } from "playwright";
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import type { Business, ScanResult, Signal } from "../types.js";
 import { fingerprint } from "./fingerprint.js";
 
 const CURRENT_YEAR = new Date().getFullYear();
+/** Budget for a full `load` (all subresources). Slow sites routinely exceed it. */
 const NAV_TIMEOUT_MS = 25_000;
+/** Second, laxer attempt: just get a document we can fingerprint. */
+const SLOW_RETRY_TIMEOUT_MS = 45_000;
 
 /**
  * Bump whenever a signal weight below changes, or a signal is added/removed.
  * Every persisted scan records this, so a score from an old ruleset is never
  * silently compared against one from a new ruleset in the history views.
  */
-export const SCORING_VERSION = "v1";
+export const SCORING_VERSION = "v2";
+
+const isTimeout = (err: unknown) =>
+  err instanceof pwErrors.TimeoutError || (err as Error | undefined)?.name === "TimeoutError";
 
 export interface ScannerOptions {
   screenshotDir: string;
@@ -64,9 +70,17 @@ export class Scanner {
     try {
       return await this.scanInContext(ctx, biz, base);
     } catch (err) {
-      base.status = "unreachable";
       base.error = (err as Error).message.split("\n")[0].slice(0, 200);
-      base.signals.push(sig("unreachable", "Website unreachable or errored", 60, true, base.error));
+      if (isTimeout(err)) {
+        // Never produced a usable document, even on the laxer retry. Bad, but
+        // not the same as a domain that does not resolve — the site is likely
+        // alive and merely unusable, so it scores below a hard failure.
+        base.status = "timeout";
+        base.signals.push(sig("load-timeout", "Homepage never finished loading", 45, true, base.error));
+      } else {
+        base.status = "unreachable";
+        base.signals.push(sig("unreachable", "Website unreachable or errored", 60, true, base.error));
+      }
       return finalize(base);
     } finally {
       await ctx.close();
@@ -85,7 +99,23 @@ export class Scanner {
 
     const startUrl = normalizeUrl(biz.website!);
     const t0 = Date.now();
-    const resp = await page.goto(startUrl, { waitUntil: "load", timeout: NAV_TIMEOUT_MS });
+    let loadTimedOut = false;
+    let resp;
+    try {
+      resp = await page.goto(startUrl, { waitUntil: "load", timeout: NAV_TIMEOUT_MS });
+    } catch (err) {
+      if (!isTimeout(err)) throw err;
+      // A slow site is still a live site, and usually a better lead than a fast
+      // one. Retry with a laxer wait so we can still fingerprint it; giving up
+      // here would throw away every other signal and score it as if it were
+      // dead. Re-navigating rather than reusing the partial page, so we never
+      // fingerprint a half-committed about:blank.
+      loadTimedOut = true;
+      resp = await page.goto(startUrl, {
+        waitUntil: "domcontentloaded",
+        timeout: SLOW_RETRY_TIMEOUT_MS,
+      });
+    }
     await page.waitForTimeout(800); // let late scripts settle
     r.loadMs = Date.now() - t0;
     r.finalUrl = page.url();
@@ -136,6 +166,8 @@ export class Scanner {
 
     // Performance-ish
     S.push(sig("slow-load", "Slow to load", 10, (r.loadMs ?? 0) > 6000, `${r.loadMs}ms`));
+    // Loaded only on the laxer retry: real, scannable, and painfully slow.
+    S.push(sig("load-timeout", "Homepage did not finish loading in time", 25, loadTimedOut, `>${NAV_TIMEOUT_MS}ms to full load`));
     S.push(sig("heavy-page", "Very heavy page", 8, (r.pageBytes ?? 0) > 6_000_000, `${Math.round((r.pageBytes ?? 0) / 1024)}KB`));
 
     // SEO / content basics
